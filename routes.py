@@ -1,14 +1,17 @@
 from flask import Flask
 from flask import Flask, render_template, request, flash
-from forms import ContactForm
-from flask.ext.mail import Message, Mail
+from forms import ContactForm,SMSForm
 import boto.ses
+import requests
 from jinja2 import Template
 from jinja2 import Environment, FileSystemLoader
+from string import Template as String_Template
 
 # use as 'REDCARPET_SETTINGS=/path/to/settings.cfg python routes.py'
 env = Environment(loader=FileSystemLoader('email_templates'))
 contact_template = env.get_template('contact.html')
+SMS_MESSAGE_DICT = {}
+SMS_MESSAGE_DICT["WELCOME_MSG"] = String_Template("Congrats! You have now $points pts @ $merchant_name. Update email at www.redcarpetup.com and get free bonus pts! Optout: SMS STOP to +919871079907")
 
 app = Flask(__name__)
 app.config.from_envvar('REDCARPET_SETTINGS')
@@ -16,18 +19,28 @@ conn = boto.ses.connect_to_region('us-east-1',aws_access_key_id=app.config['AWS_
 
 app.secret_key = 'development key'
 
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 465
-app.config["MAIL_USE_SSL"] = True
-app.config["MAIL_USERNAME"] = 'contact@example.com'
-app.config["MAIL_PASSWORD"] = 'your-password'
 
 @app.route("/")
 def hello():
     return "Hello World!"
 
-@app.route('/contact', methods=['POST'])
-def contact():
+@app.route('/sms', methods=['POST'])
+def sms():
+   form = SMSForm(csrf_enabled=False)
+   if request.method == 'POST':
+    if form.validate() == False:
+      print form.errors
+      return "Validation failed", 500
+    else:
+      sms_result = requests.get(app.config['SINFINI_API_URL'],params={'workingkey':app.config['SINFINI_KEY'], 'sender':app.config['SINFINI_SENDER_ID'],'to':form.sms_to.data,
+                                                         'message':SMS_MESSAGE_DICT[form.sms_type.data].substitute(points=form.sms_points.data, merchant_name=form.sms_merchant_name.data)})
+
+      return "Contact API success! SMS API response = " + str(sms_result),200
+ #&to="+"#{receiver_number}"+&message=
+
+
+@app.route('/email', methods=['POST'])
+def email():
   form = ContactForm(csrf_enabled=False)
 
   if request.method == 'POST':
