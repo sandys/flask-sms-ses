@@ -1,3 +1,5 @@
+import flask
+from pprint import pprint
 from flask import Flask
 from flask import Flask, render_template, request, flash
 from forms import ContactForm,SMSForm
@@ -12,6 +14,7 @@ env = Environment(loader=FileSystemLoader('email_templates'))
 contact_template = env.get_template('contact.html')
 SMS_MESSAGE_DICT = {}
 SMS_MESSAGE_DICT["WELCOME_MSG"] = String_Template("Congrats! You have now $points pts @ $merchant_name. Update email at www.redcarpetup.com and get free bonus pts! Optout: SMS STOP to +919871079907")
+SMS_MESSAGE_DICT["REGISTER"] = String_Template("Welcome! You have $points pts on $customer_action @ $merchant_name. $call_to_action at $url_link & get $bonus_offer")
 
 app = Flask(__name__)
 app.config.from_envvar('REDCARPET_SETTINGS')
@@ -23,6 +26,7 @@ app.secret_key = 'development key'
 @app.route("/")
 def hello():
     return "Hello World!"
+import json
 
 @app.route('/sms', methods=['POST'])
 def sms():
@@ -33,10 +37,33 @@ def sms():
       return "Validation failed", 500
     else:
       sms_result = requests.get(app.config['SINFINI_API_URL'],params={'workingkey':app.config['SINFINI_KEY'], 'sender':app.config['SINFINI_SENDER_ID'],'to':form.sms_to.data,
-                                                         'message':SMS_MESSAGE_DICT[form.sms_type.data].substitute(points=form.sms_points.data, merchant_name=form.sms_merchant_name.data)})
+                                                         'message':SMS_MESSAGE_DICT[form.sms_type.data].substitute(points=form.sms_points.data, merchant_name=form.sms_merchant_name.data, customer_action=form.sms_action.data, call_to_action=form.sms_call_action.data, url_link=form.sms_url.data, bonus_offer=form.sms_bonus.data)})
 
-      return "Contact API success! SMS API response = " + str(sms_result),200
+      #pprint (sms_result.text)
+
+      return "Contact API success! SMS API response = " + sms_result.text ,200
  #&to="+"#{receiver_number}"+&message=
+
+
+user_data = {'mobile':u'+917534865000',
+             'total_points':10,
+             'merchant_id':'Wokstar'}
+
+def sendsms(to):
+        SMSDATA = {'sms_to':to,
+                   'customer_action':'Registration',
+                   'call_to_action':'Update profile',
+                   'url_link':'www.redcarpetup.com/profile',
+                   'bonus_offer':'Free Drink',
+                   'sms_type':'REGISTER',
+                   'sms_points':'10',
+                   'sms_merchant_name':'dfdfd'}
+        print SMSDATA
+        SMSFORM = type('sms',(object,),SMSDATA)
+        smsresult = None
+        smsresult = sms(SMSFORM)
+        print "Sending SMS:",smsresult
+
 
 
 @app.route('/email', methods=['POST'])
