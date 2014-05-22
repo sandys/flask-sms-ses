@@ -16,6 +16,6 @@ class SMSForm(Form):
   sms_points = IntegerField("sms-points")
   sms_action = TextField("sms-action")
   sms_call_action = TextField("sms-call-action")
-  sms_url= TextField("sms-url",validators=[URL()] )
+  sms_url= TextField("sms-url" )
   sms_bonus= TextField("sms-bonus")
 

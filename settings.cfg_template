@@ -1,6 +1,8 @@
 AWS_ACCESS_KEY="A"
-AWS_SECRET_ACCESS_KEY="WrS+vP"
+AWS_SECRET_ACCESS_KEY="WrSK+vP"
 SES_FROM_EMAIL="no-reply@redcarpetmails.com"
-SINFINI_KEY="143"
+SINFINI_KEY="14398"
 SINFINI_SENDER_ID="REDCPT"
 SINFINI_API_URL = "http://alerts.sinfini.com/api/web2sms.php"
+SINFINI_STATUS_URL = "http://alerts.sinfini.com/api/status.php"
+

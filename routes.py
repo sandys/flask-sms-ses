@@ -1,5 +1,6 @@
 import flask
 from pprint import pprint
+from time import sleep
 from flask import Flask
 from flask import Flask, render_template, request, flash
 from forms import ContactForm,SMSForm
@@ -8,6 +9,7 @@ import requests
 from jinja2 import Template
 from jinja2 import Environment, FileSystemLoader
 from string import Template as String_Template
+import re
 
 # use as 'REDCARPET_SETTINGS=/path/to/settings.cfg python routes.py'
 env = Environment(loader=FileSystemLoader('email_templates'))
@@ -28,6 +30,10 @@ def hello():
     return "Hello World!"
 import json
 
+
+def get_sms_status(status_id):
+  return requests.get(app.config['SINFINI_STATUS_URL'], params = {'workingkey':app.config['SINFINI_KEY'], "messageid":status_id}).text
+
 @app.route('/sms', methods=['POST'])
 def sms():
    form = SMSForm(csrf_enabled=False)
@@ -39,9 +45,10 @@ def sms():
       sms_result = requests.get(app.config['SINFINI_API_URL'],params={'workingkey':app.config['SINFINI_KEY'], 'sender':app.config['SINFINI_SENDER_ID'],'to':form.sms_to.data,
                                                          'message':SMS_MESSAGE_DICT[form.sms_type.data].substitute(points=form.sms_points.data, merchant_name=form.sms_merchant_name.data, customer_action=form.sms_action.data, call_to_action=form.sms_call_action.data, url_link=form.sms_url.data, bonus_offer=form.sms_bonus.data)})
 
-      #pprint (sms_result.text)
-
-      return "Contact API success! SMS API response = " + sms_result.text ,200
+      #pprint (re.search(' ID=(.*)',sms_result.text).group(1))
+      ID = re.search(' ID=(.*)',sms_result.text).group(1)
+      sleep(5)
+      return "Contact API success! SMS API response = " + get_sms_status(ID) ,200
  #&to="+"#{receiver_number}"+&message=
 
 
